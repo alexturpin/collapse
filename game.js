@@ -7,6 +7,7 @@ var INITIAL_ROW_SPEED = 3000;
 var LEVEL_ROWS = 10;
 var LEVEL_ROW_SPEED_DECREMENT = 50;
 var MINIMUM_ROW_SPEED = 500;
+var LEVEL_GREY = 5;
 
 var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create });
 var rng = new Phaser.RandomDataGenerator([Date.now()]);
@@ -17,6 +18,7 @@ function preload() {
 	game.load.image('blue', 'assets/img/element_blue_square.png');
 	game.load.image('red', 'assets/img/element_red_square.png');
 	game.load.image('green', 'assets/img/element_green_square.png');
+	game.load.image('grey', 'assets/img/element_grey_square.png');
 }
 
 function create() {
@@ -265,7 +267,9 @@ function shiftRow() {
 	if (totalRows % LEVEL_ROWS == 0) {
 		level++;
 		levelText.text = "Level: " + level;
-		rowSpeed = Math.max(rowSpeed - (50 * level), MINIMUM_ROW_SPEED); //Speed it up
+		rowSpeed = Math.max(rowSpeed - (25 * level), MINIMUM_ROW_SPEED); //Speed it up
+
+		if (level % LEVEL_GREY == 0) blockColors.push('grey');
 	}
 
 	game.time.events.add(shiftDelay, function() {

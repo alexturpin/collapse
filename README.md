@@ -6,8 +6,7 @@ Todo
  - Sprite atlas
  - Inherit sprite for block object? Getter for getGridPosition?
  - Gameplay elements
-  - Scores (exponential with block count)
-  - Levels (more colors, speed)
   - Better game over & reset
   - Sounds
+ - Fix positioning bugs when game gets really fast
  - Phonegap port with forced portrait orientation
