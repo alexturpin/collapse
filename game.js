@@ -151,7 +151,7 @@ function reorganizeBlocks() {
 		}
 	}
 
-	setTimeout(centerBlocks, fallDelay);
+	game.time.events.add(fallDelay, centerBlocks);
 
 	//Centering of blocks
 	function centerBlocks() {
@@ -182,9 +182,9 @@ function reorganizeBlocks() {
 			}
 		}
 
-		setTimeout(function() {
+		game.time.events.add(centerDelay, function() {
 			reorganizing = false;
-		}, centerDelay);
+		});
 	}
 }
 
@@ -207,17 +207,15 @@ function shiftColumn(column, shift) {
 }
 
 function buildRow() {
-	if (!paused) {
-		if (rowIndex + 1 <= GRID_WIDTH) {
-			createBlock(rowIndex++, 0);
-		}
-		else if (!reorganizing) {
-			shiftRow();
-			rowIndex = 0;
-		}
+	if (rowIndex + 1 <= GRID_WIDTH) {
+		createBlock(rowIndex++, 0);
+	}
+	else if (!reorganizing) {
+		shiftRow();
+		rowIndex = 0;
 	}
 
-	setTimeout(buildRow, rowSpeed / GRID_WIDTH);
+	game.time.events.add(rowSpeed / GRID_WIDTH, buildRow);
 }
 
 function shiftRow() {
@@ -245,7 +243,7 @@ function shiftRow() {
 		}
 	}
 
-	setTimeout(function() {
+	game.time.events.add(shiftDelay, function() {
 		reorganizing = false;
-	}, shiftDelay);
+	});
 }
