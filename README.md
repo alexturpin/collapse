@@ -8,6 +8,6 @@ Todo
  - Gameplay elements
   - Scores (exponential with block count)
   - Levels (more colors, speed)
-  - New bottom row every so often at level defined speed
+  - Better game over & reset
   - Sounds
  - Phonegap port with forced portrait orientation

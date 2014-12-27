@@ -2,11 +2,12 @@ var GRID_WIDTH = 15;
 var GRID_HEIGHT = 20;
 var BLOCK_SIZE = 32;
 var ANIM_SPEED = 100;
+var INITIAL_ROW_SPEED = 5000;
 
 var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 var rng = new Phaser.RandomDataGenerator([Date.now()]);
 
-var grid, blockColors, markedBlocks, markColor, reorganizing;
+var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics;
 
 function preload() {
 	game.load.image('blue', 'assets/img/element_blue_square.png');
@@ -23,28 +24,44 @@ function create() {
 
 	blockColors = ['blue', 'red', 'green'];
 	reorganizing = false;
+	rowSpeed = INITIAL_ROW_SPEED;
+	rowIndex = 0;
+
+	graphics = game.add.graphics(0, 0);
+	graphics.lineStyle(2, 0xFFFFFF, 1);
+	graphics.moveTo(0, game.height - BLOCK_SIZE);
+	graphics.lineTo(game.width, game.height - BLOCK_SIZE);
 
 	initGrid();
+	buildRow();
 }
 
 function update() {
 
 }
 
+function createBlock(x, y) {
+	var color = rng.pick(blockColors);
+	var block = game.add.sprite(x * BLOCK_SIZE, game.height - BLOCK_SIZE - (y * BLOCK_SIZE), color);
+	grid[x][y] = block;
+
+	block.color = color;
+	block.inputEnabled = true;
+	block.events.onInputDown.add(blockClicked, this);
+
+	game.world.bringToTop(graphics);
+
+	return block;
+}
+
 function initGrid() {
 	grid = [];
 	for(var x = 0; x < GRID_WIDTH; x++) {
 		grid[x] = Array(GRID_WIDTH);
-		for(var y = 0; y < GRID_HEIGHT; y++) {
+		for(var y = 1; y < GRID_HEIGHT; y++) {
 			if (y > 10) continue;
 
-			var color = rng.pick(blockColors);
-			var block = game.add.sprite(x * BLOCK_SIZE, game.height - BLOCK_SIZE - (y * BLOCK_SIZE), color);
-			grid[x][y] = block;
-
-			block.color = color;
-			block.inputEnabled = true;
-			block.events.onInputDown.add(blockClicked, this);
+			createBlock(x, y);
 		}
 	}
 }
@@ -78,9 +95,11 @@ function markBlocks(block) {
 	if (block.color != markColor) return; //Check if is of current mark color
 	if (markedBlocks.indexOf(block) != -1) return; //Check if not already marked
 
+	var position = getGridPosition(block);
+	if (position.y == 0) return; //Building row
+
 	markedBlocks.push(block);
 
-	var position = getGridPosition(block);
 	if (position.x > 0) markBlocks(grid[position.x - 1][position.y]);
 	if (position.x < GRID_WIDTH - 1) markBlocks(grid[position.x + 1][position.y]);
 	if (position.y > 0) markBlocks(grid[position.x][position.y - 1]);
@@ -93,7 +112,7 @@ function reorganizeBlocks() {
 	//Falling of blocks
 	var fallDelay = 0;
 	for(var x = 0; x < GRID_WIDTH; x++) {
-		for(var y = 0; y < GRID_HEIGHT; y++) {
+		for(var y = 1; y < GRID_HEIGHT; y++) {
 			if (grid[x][y] != null) continue;
 
 			//Find nearest top block
@@ -129,10 +148,10 @@ function reorganizeBlocks() {
 		//Moving blocks towards the center
 		var center = (GRID_WIDTH + 1) / 2;
 		for(var x = center - 1; x >= 0; x--) { //Scan center to left
-			if (grid[x][0] == null) {
+			if (grid[x][1] == null) {
 				var column; //Find next column
 				for(var column = x; column >= 0; column--) {
-					if (grid[column][0]) break;
+					if (grid[column][1]) break;
 				}
 
 				shiftColumn(column, x - column);
@@ -140,10 +159,10 @@ function reorganizeBlocks() {
 			}
 		}
 		for(var x = center; x < GRID_WIDTH; x++) { //Scan center to right
-			if (grid[x][0] == null) {
+			if (grid[x][1] == null) {
 				var column; //Find next column
 				for(var column = x; column < GRID_WIDTH; column++) {
-					if (grid[column][0]) break;
+					if (grid[column][1]) break;
 				}
 
 				shiftColumn(column, x - column);
@@ -160,7 +179,7 @@ function reorganizeBlocks() {
 function shiftColumn(column, shift) {
 	if (column < 0 || column >= GRID_WIDTH) return;
 
-	for(var y = 0; y < GRID_HEIGHT; y++) {
+	for(var y = 1; y < GRID_HEIGHT; y++) {
 		var block = grid[column][y];
 		if (block == null) break;
 
@@ -173,4 +192,46 @@ function shiftColumn(column, shift) {
 		grid[column][y] = null;
 		grid[column + shift][y] = block;
 	}
+}
+
+function buildRow() {
+	if (rowIndex + 1 <= GRID_WIDTH) {
+		createBlock(rowIndex++, 0);
+	}
+	else if (!reorganizing) {
+		shiftRow();
+		rowIndex = 0;
+	}
+
+	setTimeout(buildRow, rowSpeed / GRID_WIDTH);
+}
+
+function shiftRow() {
+	reorganizing = true;
+	var shiftDelay = 0;
+
+	for(var y = GRID_HEIGHT - 1; y >= 0; y--) {
+		for(var x = 0; x < GRID_WIDTH; x++) {
+			var block = grid[x][y];
+			if (block == null) continue;
+
+			if (y == GRID_HEIGHT - 1) {
+				alert("Game over");
+				location.reload();
+				return;
+			}
+
+			var tween = game.add.tween(block);
+			tween.to({y: block.y - BLOCK_SIZE}, ANIM_SPEED);
+			tween.start();
+			shiftDelay = ANIM_SPEED;
+
+			grid[x][y] = null;
+			grid[x][y + 1] = block;
+		}
+	}
+
+	setTimeout(function() {
+		reorganizing = false;
+	}, shiftDelay);
 }
