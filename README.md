@@ -11,3 +11,4 @@ Todo
   - Levels (more colors, speed)
   - New bottom row every so often at level defined speed
   - Sounds
+ - Phonegap port with forced portrait orientation

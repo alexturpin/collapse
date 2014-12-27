@@ -6,7 +6,7 @@ var ANIM_SPEED = 100;
 var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 var rng = new Phaser.RandomDataGenerator(/*[Date.now()]*/);
 
-var grid, blockColors, markedBlocks, markColor, reorganizing = false;
+var grid, blockColors, markedBlocks, markColor, reorganizing;
 
 function preload() {
 	game.load.image('blue', 'assets/img/element_blue_square.png');
@@ -15,7 +15,14 @@ function preload() {
 }
 
 function create() {
+	this.input.maxPointers = 1;
+	this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+	this.scale.pageAlignHorizontally = true;
+	this.scale.pageAlignVertically = true;
+	this.scale.setScreenSize(true);
+
 	blockColors = ['blue', 'red', 'green'];
+	reorganizing = false;
 
 	initGrid();
 }
