@@ -1,0 +1,6 @@
+Collapse
+======
+
+Todo
+----
+ - Sprite atlas
