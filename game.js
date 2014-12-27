@@ -4,7 +4,7 @@ var BLOCK_SIZE = 32;
 var ANIM_SPEED = 100;
 
 var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create, update: update });
-var rng = new Phaser.RandomDataGenerator(/*[Date.now()]*/);
+var rng = new Phaser.RandomDataGenerator([Date.now()]);
 
 var grid, blockColors, markedBlocks, markColor, reorganizing;
 
@@ -60,6 +60,8 @@ function blockClicked(block, pointer) {
 	markColor = block.color;
 
 	markBlocks(block);
+
+	if (markedBlocks.length < 3) return; //Minimum 3 block match
 
 	markedBlocks.forEach(function(block) {
 		block.destroy();
