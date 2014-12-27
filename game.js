@@ -1,9 +1,10 @@
 var GRID_WIDTH = 15;
 var GRID_HEIGHT = 20;
 var BLOCK_SIZE = 32;
+var ANIM_SPEED = 100;
 
 var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create, update: update });
-var rng = new Phaser.RandomDataGenerator([Date.now()]);
+var rng = new Phaser.RandomDataGenerator(/*[Date.now()]*/);
 
 var grid, blockColors, markedBlocks, markColor, reorganizing = false;
 
@@ -28,7 +29,7 @@ function initGrid() {
 	for(var x = 0; x < GRID_WIDTH; x++) {
 		grid[x] = Array(GRID_WIDTH);
 		for(var y = 0; y < GRID_HEIGHT; y++) {
-			//if (y > 10) continue;
+			if (y > 10) continue;
 
 			var color = rng.pick(blockColors);
 			var block = game.add.sprite(x * BLOCK_SIZE, game.height - BLOCK_SIZE - (y * BLOCK_SIZE), color);
@@ -81,6 +82,7 @@ function reorganizeBlocks() {
 	reorganizing = true;
 
 	//Falling of blocks
+	var fallDelay = 0;
 	for(var x = 0; x < GRID_WIDTH; x++) {
 		for(var y = 0; y < GRID_HEIGHT; y++) {
 			if (grid[x][y] != null) continue;
@@ -99,8 +101,9 @@ function reorganizeBlocks() {
 
 			//Animate fall
 			var tween = game.add.tween(nearestTop);
-			tween.to({y: game.height - BLOCK_SIZE - y * BLOCK_SIZE}, 200);
+			tween.to({y: game.height - BLOCK_SIZE - y * BLOCK_SIZE}, ANIM_SPEED);
 			tween.start();
+			fallDelay = ANIM_SPEED;
 
 			//Reorganize grid
 			grid[x][y] = nearestTop;
@@ -108,5 +111,57 @@ function reorganizeBlocks() {
 		}
 	}
 
-	reorganizing = false;
+	setTimeout(centerBlocks, fallDelay);
+
+	//Centering of blocks
+	function centerBlocks() {
+		var centerDelay = 0;
+
+		//Moving blocks towards the center
+		var center = (GRID_WIDTH + 1) / 2;
+		for(var x = center - 1; x >= 0; x--) { //Scan center to left
+			if (grid[x][0] == null) {
+				var column; //Find next column
+				for(var column = x; column >= 0; column--) {
+					if (grid[column][0]) break;
+				}
+
+				shiftColumn(column, x - column);
+				centerDelay = ANIM_SPEED;
+			}
+		}
+		for(var x = center; x < GRID_WIDTH; x++) { //Scan center to right
+			if (grid[x][0] == null) {
+				var column; //Find next column
+				for(var column = x; column < GRID_WIDTH; column++) {
+					if (grid[column][0]) break;
+				}
+
+				shiftColumn(column, x - column);
+				centerDelay = ANIM_SPEED;
+			}
+		}
+
+		setTimeout(function() {
+			reorganizing = false;
+		}, centerDelay);
+	}
+}
+
+function shiftColumn(column, shift) {
+	if (column < 0 || column >= GRID_WIDTH) return;
+
+	for(var y = 0; y < GRID_HEIGHT; y++) {
+		var block = grid[column][y];
+		if (block == null) break;
+
+		//Animate shift
+		var tween = game.add.tween(block);
+		tween.to({x: block.x + (BLOCK_SIZE * shift)}, ANIM_SPEED);
+		tween.start();
+
+		//Reorganize grid
+		grid[column][y] = null;
+		grid[column + shift][y] = block;
+	}
 }
