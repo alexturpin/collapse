@@ -2,12 +2,13 @@ var GRID_WIDTH = 15;
 var GRID_HEIGHT = 20;
 var BLOCK_SIZE = 32;
 var ANIM_SPEED = 100;
+var INITIAL_ROWS = 5;
 var INITIAL_ROW_SPEED = 5000;
 
 var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 var rng = new Phaser.RandomDataGenerator([Date.now()]);
 
-var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics, pauseText;
+var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics, pauseText, level, levelText, score, scoreText;
 
 function preload() {
 	game.load.image('blue', 'assets/img/element_blue_square.png');
@@ -25,10 +26,6 @@ function create() {
 	game.onPause.add(onGamePause, this);
 	game.onResume.add(onGameResume, this);
 
-	pauseText = game.add.text(0, game.height / 3, "GAME PAUSED", { font: "65px Impact", fill: "#ffffff", align: "center", stroke: "#000000", strokeThickness: 5});
-	pauseText.x = game.world.centerX - (pauseText.width / 2);
-	pauseText.visible = false;
-
 	blockColors = ['blue', 'red', 'green'];
 	reorganizing = false;
 	rowSpeed = INITIAL_ROW_SPEED;
@@ -38,6 +35,15 @@ function create() {
 	graphics.lineStyle(2, 0xFFFFFF, 1);
 	graphics.moveTo(0, game.height - BLOCK_SIZE);
 	graphics.lineTo(game.width, game.height - BLOCK_SIZE);
+
+	pauseText = game.add.text(0, game.height / 3, "GAME PAUSED", { font: "65px Impact", fill: "#ffffff", align: "center", stroke: "#000000", strokeThickness: 5});
+	pauseText.x = game.world.centerX - (pauseText.width / 2);
+	pauseText.visible = false;
+
+	level = 1;
+	levelText = game.add.text(0, 5, "Level: 1", { font: "30px Impact", fill: "#ffffff", align: "center", stroke: "#000000", strokeThickness: 5});
+	score = 0;
+	scoreText = game.add.text(0, 40, "Score: 0", { font: "30px Impact", fill: "#ffffff", align: "center", stroke: "#000000", strokeThickness: 5});
 
 	initGrid();
 	buildRow();
@@ -66,6 +72,8 @@ function createBlock(x, y) {
 	block.events.onInputDown.add(blockClicked, this);
 
 	game.world.bringToTop(graphics);
+	game.world.bringToTop(levelText);
+	game.world.bringToTop(scoreText);
 
 	return block;
 }
@@ -75,7 +83,7 @@ function initGrid() {
 	for(var x = 0; x < GRID_WIDTH; x++) {
 		grid[x] = Array(GRID_WIDTH);
 		for(var y = 1; y < GRID_HEIGHT; y++) {
-			if (y > 10) continue;
+			if (y > INITIAL_ROWS) continue;
 
 			createBlock(x, y);
 		}
@@ -95,6 +103,12 @@ function blockClicked(block, pointer) {
 	markBlocks(block);
 
 	if (markedBlocks.length < 3) return; //Minimum 3 block match
+
+	//Score formula
+	var x = markedBlocks.length;
+	var y = x + Math.pow(x, 3);
+	score += y;
+	scoreText.text = "Score: " + score;
 
 	markedBlocks.forEach(function(block) {
 		block.destroy();
