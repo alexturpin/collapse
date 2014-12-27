@@ -6,9 +6,8 @@ var INITIAL_ROW_SPEED = 5000;
 
 var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 var rng = new Phaser.RandomDataGenerator([Date.now()]);
-var paused = false;
 
-var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics;
+var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics, pauseText;
 
 function preload() {
 	game.load.image('blue', 'assets/img/element_blue_square.png');
@@ -26,6 +25,10 @@ function create() {
 	game.onPause.add(onGamePause, this);
 	game.onResume.add(onGameResume, this);
 
+	pauseText = game.add.text(0, game.height / 3, "GAME PAUSED", { font: "65px Impact", fill: "#ffffff", align: "center", stroke: "#000000", strokeThickness: 5});
+	pauseText.x = game.world.centerX - (pauseText.width / 2);
+	pauseText.visible = false;
+
 	blockColors = ['blue', 'red', 'green'];
 	reorganizing = false;
 	rowSpeed = INITIAL_ROW_SPEED;
@@ -41,11 +44,12 @@ function create() {
 }
 
 function onGamePause() {
-	paused = true;
+	pauseText.visible = true;
+	game.world.bringToTop(pauseText);
 }
 
 function onGameResume() {
-	paused = false;
+	pauseText.visible = false;
 }
 
 function update() {
