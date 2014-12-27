@@ -3,12 +3,15 @@ var GRID_HEIGHT = 20;
 var BLOCK_SIZE = 32;
 var ANIM_SPEED = 100;
 var INITIAL_ROWS = 5;
-var INITIAL_ROW_SPEED = 5000;
+var INITIAL_ROW_SPEED = 3000;
+var LEVEL_ROWS = 10;
+var LEVEL_ROW_SPEED_DECREMENT = 50;
+var MINIMUM_ROW_SPEED = 500;
 
-var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create });
 var rng = new Phaser.RandomDataGenerator([Date.now()]);
 
-var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics, pauseText, level, levelText, score, scoreText;
+var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics, pauseText, totalRows, level, levelText, score, scoreText;
 
 function preload() {
 	game.load.image('blue', 'assets/img/element_blue_square.png');
@@ -40,6 +43,7 @@ function create() {
 	pauseText.x = game.world.centerX - (pauseText.width / 2);
 	pauseText.visible = false;
 
+	totalRows = 0;
 	level = 1;
 	levelText = game.add.text(0, 5, "Level: 1", { font: "30px Impact", fill: "#ffffff", align: "center", stroke: "#000000", strokeThickness: 5});
 	score = 0;
@@ -56,10 +60,6 @@ function onGamePause() {
 
 function onGameResume() {
 	pauseText.visible = false;
-}
-
-function update() {
-
 }
 
 function createBlock(x, y) {
@@ -106,7 +106,7 @@ function blockClicked(block, pointer) {
 
 	//Score formula
 	var x = markedBlocks.length;
-	var y = x + Math.pow(x, 3);
+	var y = x + Math.pow(x, 3) * level;
 	score += y;
 	scoreText.text = "Score: " + score;
 
@@ -259,6 +259,13 @@ function shiftRow() {
 			grid[x][y] = null;
 			grid[x][y + 1] = block;
 		}
+	}
+
+	totalRows++;
+	if (totalRows % LEVEL_ROWS == 0) {
+		level++;
+		levelText.text = "Level: " + level;
+		rowSpeed = Math.max(rowSpeed - (50 * level), MINIMUM_ROW_SPEED); //Speed it up
 	}
 
 	game.time.events.add(shiftDelay, function() {
