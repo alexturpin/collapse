@@ -8,12 +8,13 @@ var LEVEL_ROWS = 10;
 var LEVEL_ROW_SPEED_DECREMENT = 50;
 var MINIMUM_ROW_SPEED = 500;
 var LEVEL_GREY = 5;
+var GAME_OVER_RESTART_DELAY = 5000;
 
 var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create });
 var rng = new Phaser.RandomDataGenerator([Date.now()]);
 var sounds = {};
 
-var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics, pauseText, totalRows, level, levelText, score, scoreText;
+var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics, pauseText, totalRows, level, levelText, score, scoreText, gameOver, gameOverText;
 
 function preload() {
 	game.load.image('blue', 'assets/img/element_blue_square.png');
@@ -51,6 +52,11 @@ function create() {
 	pauseText.x = game.world.centerX - (pauseText.width / 2);
 	pauseText.visible = false;
 
+	gameOver = false;
+	gameOverText = game.add.text(0, game.height / 3, "GAME OVER", { font: "65px Impact", fill: "#ffffff", align: "center", stroke: "#000000", strokeThickness: 5});
+	gameOverText.x = game.world.centerX - (gameOverText.width / 2);
+	gameOverText.visible = false;
+
 	totalRows = 0;
 	level = 1;
 	levelText = game.add.text(0, 5, "Level: 1", { font: "30px Impact", fill: "#ffffff", align: "center", stroke: "#000000", strokeThickness: 5});
@@ -62,6 +68,8 @@ function create() {
 }
 
 function onGamePause() {
+	if (gameOver) return;
+
 	pauseText.visible = true;
 	game.world.bringToTop(pauseText);
 }
@@ -103,6 +111,7 @@ function getGridPosition(position) {
 }
 
 function blockClicked(block, pointer) {
+	if (gameOver) return;
 	if (reorganizing) return;
 
 	markedBlocks = [];
@@ -235,6 +244,8 @@ function shiftColumn(column, shift) {
 }
 
 function buildRow() {
+	if (gameOver) return;
+
 	if (rowIndex + 1 <= GRID_WIDTH) {
 		createBlock(rowIndex++, 0);
 	}
@@ -255,10 +266,18 @@ function shiftRow() {
 			var block = grid[x][y];
 			if (block == null) continue;
 
-			if (y == GRID_HEIGHT - 1) {
+			if (y == GRID_HEIGHT - 1) { //Game over
+				gameOver = true;
+
 				game.sound.play('gameover');
-				alert("Game over");
-				location.reload();
+
+				gameOverText.visible = true;
+				game.world.bringToTop(gameOverText);
+
+				game.time.events.add(GAME_OVER_RESTART_DELAY, function() {
+					game.state.restart();
+				});
+
 				return;
 			}
 
