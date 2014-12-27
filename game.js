@@ -3,7 +3,7 @@ var GRID_HEIGHT = 20;
 var BLOCK_SIZE = 32;
 var ANIM_SPEED = 100;
 var INITIAL_ROWS = 5;
-var INITIAL_ROW_SPEED = 3000;
+var INITIAL_ROW_SPEED = 4000;
 var LEVEL_ROWS = 10;
 var LEVEL_ROW_SPEED_DECREMENT = 50;
 var MINIMUM_ROW_SPEED = 500;
@@ -11,6 +11,7 @@ var LEVEL_GREY = 5;
 
 var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create });
 var rng = new Phaser.RandomDataGenerator([Date.now()]);
+var sounds = {};
 
 var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics, pauseText, totalRows, level, levelText, score, scoreText;
 
@@ -19,6 +20,11 @@ function preload() {
 	game.load.image('red', 'assets/img/element_red_square.png');
 	game.load.image('green', 'assets/img/element_green_square.png');
 	game.load.image('grey', 'assets/img/element_grey_square.png');
+
+	game.load.audio('click', 'assets/sound/click.ogg');
+	game.load.audio('row', 'assets/sound/row.ogg');
+	game.load.audio('levelup', 'assets/sound/levelup.ogg');
+	game.load.audio('gameover', 'assets/sound/gameover.ogg');
 }
 
 function create() {
@@ -105,6 +111,8 @@ function blockClicked(block, pointer) {
 	markBlocks(block);
 
 	if (markedBlocks.length < 3) return; //Minimum 3 block match
+
+	game.sound.play('click');
 
 	//Score formula
 	var x = markedBlocks.length;
@@ -248,6 +256,7 @@ function shiftRow() {
 			if (block == null) continue;
 
 			if (y == GRID_HEIGHT - 1) {
+				game.sound.play('gameover');
 				alert("Game over");
 				location.reload();
 				return;
@@ -263,10 +272,13 @@ function shiftRow() {
 		}
 	}
 
+	game.sound.play('row');
+
 	totalRows++;
-	if (totalRows % LEVEL_ROWS == 0) {
-		level++;
-		levelText.text = "Level: " + level;
+	if (totalRows % LEVEL_ROWS == 0) { //Level up
+		game.sound.play('levelup');
+
+		levelText.text = "Level: " + (++level);
 		rowSpeed = Math.max(rowSpeed - (25 * level), MINIMUM_ROW_SPEED); //Speed it up
 
 		if (level % LEVEL_GREY == 0) blockColors.push('grey');
