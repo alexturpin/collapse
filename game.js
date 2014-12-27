@@ -6,6 +6,7 @@ var INITIAL_ROW_SPEED = 5000;
 
 var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 var rng = new Phaser.RandomDataGenerator([Date.now()]);
+var paused = false;
 
 var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics;
 
@@ -22,6 +23,9 @@ function create() {
 	this.scale.pageAlignVertically = true;
 	this.scale.setScreenSize(true);
 
+	game.onPause.add(onGamePause, this);
+	game.onResume.add(onGameResume, this);
+
 	blockColors = ['blue', 'red', 'green'];
 	reorganizing = false;
 	rowSpeed = INITIAL_ROW_SPEED;
@@ -34,6 +38,14 @@ function create() {
 
 	initGrid();
 	buildRow();
+}
+
+function onGamePause() {
+	paused = true;
+}
+
+function onGameResume() {
+	paused = false;
 }
 
 function update() {
@@ -195,12 +207,14 @@ function shiftColumn(column, shift) {
 }
 
 function buildRow() {
-	if (rowIndex + 1 <= GRID_WIDTH) {
-		createBlock(rowIndex++, 0);
-	}
-	else if (!reorganizing) {
-		shiftRow();
-		rowIndex = 0;
+	if (!paused) {
+		if (rowIndex + 1 <= GRID_WIDTH) {
+			createBlock(rowIndex++, 0);
+		}
+		else if (!reorganizing) {
+			shiftRow();
+			rowIndex = 0;
+		}
 	}
 
 	setTimeout(buildRow, rowSpeed / GRID_WIDTH);
