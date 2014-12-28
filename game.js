@@ -303,7 +303,7 @@ function shiftRow() {
 		rowSpeed = Math.max(rowSpeed - (25 * level), MINIMUM_ROW_SPEED); //Speed it up
 		animSpeed = Math.max(animSpeed - 5, MINIMUM_ANIM_SPEED); //Also speed up the animations
 
-		if (level % LEVEL_GREY == 0) blockColors.push('grey');
+		if (level == LEVEL_GREY) blockColors.push('grey');
 	}
 
 	game.time.events.add(shiftDelay, function() {
