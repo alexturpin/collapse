@@ -1,7 +1,8 @@
 var GRID_WIDTH = 15;
 var GRID_HEIGHT = 20;
 var BLOCK_SIZE = 32;
-var ANIM_SPEED = 100;
+var INITIAL_ANIM_SPEED = 100;
+var MINIMUM_ANIM_SPEED = 25;
 var INITIAL_ROWS = 5;
 var INITIAL_ROW_SPEED = 4000;
 var LEVEL_ROWS = 10;
@@ -14,7 +15,7 @@ var game = new Phaser.Game(GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE, Ph
 var rng = new Phaser.RandomDataGenerator([Date.now()]);
 var sounds = {};
 
-var grid, blockColors, markedBlocks, markColor, reorganizing, rowSpeed, rowIndex, graphics, pauseText, totalRows, level, levelText, score, scoreText, gameOver, gameOverText;
+var grid, blockColors, markedBlocks, markColor, reorganizing, animSpeed, rowSpeed, rowIndex, graphics, pauseText, totalRows, level, levelText, score, scoreText, gameOver, gameOverText;
 
 function preload() {
 	game.load.image('blue', 'assets/img/element_blue_square.png');
@@ -40,6 +41,7 @@ function create() {
 
 	blockColors = ['blue', 'red', 'green'];
 	reorganizing = false;
+	animSpeed = INITIAL_ANIM_SPEED;
 	rowSpeed = INITIAL_ROW_SPEED;
 	rowIndex = 0;
 
@@ -178,9 +180,9 @@ function reorganizeBlocks() {
 
 			//Animate fall
 			var tween = game.add.tween(nearestTop);
-			tween.to({y: game.height - BLOCK_SIZE - y * BLOCK_SIZE}, ANIM_SPEED);
+			tween.to({y: game.height - BLOCK_SIZE - y * BLOCK_SIZE}, animSpeed);
 			tween.start();
-			fallDelay = ANIM_SPEED;
+			fallDelay = animSpeed;
 
 			//Reorganize grid
 			grid[x][y] = nearestTop;
@@ -204,7 +206,7 @@ function reorganizeBlocks() {
 				}
 
 				shiftColumn(column, x - column);
-				centerDelay = ANIM_SPEED;
+				centerDelay = animSpeed;
 			}
 		}
 		for(var x = center; x < GRID_WIDTH; x++) { //Scan center to right
@@ -215,7 +217,7 @@ function reorganizeBlocks() {
 				}
 
 				shiftColumn(column, x - column);
-				centerDelay = ANIM_SPEED;
+				centerDelay = animSpeed;
 			}
 		}
 
@@ -234,7 +236,7 @@ function shiftColumn(column, shift) {
 
 		//Animate shift
 		var tween = game.add.tween(block);
-		tween.to({x: block.x + (BLOCK_SIZE * shift)}, ANIM_SPEED);
+		tween.to({x: block.x + (BLOCK_SIZE * shift)}, animSpeed);
 		tween.start();
 
 		//Reorganize grid
@@ -282,9 +284,9 @@ function shiftRow() {
 			}
 
 			var tween = game.add.tween(block);
-			tween.to({y: block.y - BLOCK_SIZE}, ANIM_SPEED);
+			tween.to({y: block.y - BLOCK_SIZE}, animSpeed);
 			tween.start();
-			shiftDelay = ANIM_SPEED;
+			shiftDelay = animSpeed;
 
 			grid[x][y] = null;
 			grid[x][y + 1] = block;
@@ -299,6 +301,7 @@ function shiftRow() {
 
 		levelText.text = "Level: " + (++level);
 		rowSpeed = Math.max(rowSpeed - (25 * level), MINIMUM_ROW_SPEED); //Speed it up
+		animSpeed = Math.max(animSpeed - 5, MINIMUM_ANIM_SPEED); //Also speed up the animations
 
 		if (level % LEVEL_GREY == 0) blockColors.push('grey');
 	}
